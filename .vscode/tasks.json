@@ -1,0 +1,55 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "mix test",
+      "type": "shell",
+      "command": "mix",
+      "args": [
+        "test",
+        "--exclude",
+        "integration",
+        "--exclude",
+        "feature",
+        "--color"
+      ],
+      "options": {
+        "cwd": "${workspaceRoot}",
+        "env": {
+          "ADVENT_OF_CODE_SESSION_COOKIE": "${env:ADVENT_OF_CODE_SESSION_COOKIE}"
+        }
+      },
+      "problemMatcher": "$mixTestFailure"
+    },
+    {
+      "label": "mix test file",
+      "type": "shell",
+      "command": "mix",
+      "args": ["test", "${relativeFile}", "--color", "--trace"],
+      "options": {
+        "cwd": "${workspaceRoot}",
+        "env": {
+          "ADVENT_OF_CODE_SESSION_COOKIE": "${env:ADVENT_OF_CODE_SESSION_COOKIE}"
+        }
+      },
+      "problemMatcher": "$mixTestFailure"
+    },
+    {
+      "label": "mix test focused",
+      "type": "shell",
+      "command": "mix",
+      "args": ["test", "${relativeFile}:${lineNumber}", "--color", "--trace"],
+      "options": {
+        "cwd": "${workspaceRoot}",
+        "env": {
+          "ADVENT_OF_CODE_SESSION_COOKIE": "${env:ADVENT_OF_CODE_SESSION_COOKIE}"
+        }
+      },
+      "problemMatcher": "$mixTestFailure",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    }
+  ]
+}
