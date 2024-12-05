@@ -4,6 +4,15 @@ defmodule Advent.Year2024.Day01Test do
 
   alias Advent.Year2024.Day01
 
+  describe "part1/1" do
+    test "solves part 1 with fixture data" do
+      input = File.read!("test/fixtures/day01p1_input.txt")
+      result = Day01.part1(input)
+
+      assert result == 1_110_981
+    end
+  end
+
   describe "to_columns/1" do
     test "converts input string into column pairs" do
       input = "5 3\n2 7\n8 1"
@@ -38,20 +47,21 @@ defmodule Advent.Year2024.Day01Test do
     end
   end
 
-  describe "part1/1" do
-    test "solves part 1 with fixture data" do
+  describe "part2/1" do
+    test "solves part 2 with fixture data" do
       input = File.read!("test/fixtures/day01p1_input.txt")
-      result = Day01.part1(input)
+      result = Day01.part2(input)
 
-      assert result == 1_110_981
+      assert result == 24_869_388
     end
   end
 
-  @tag :skip
-  test "part2/1" do
-    input = ""
-    result = Day01.part2(input)
+  describe "calculate_similary_score/1" do
+    test "calculates the similarity score" do
+      input = [{3, 4}, {4, 3}, {2, 5}, {1, 3}, {3, 9}, {3, 3}]
+      expected = 31
 
-    assert result == input
+      assert Day01.calculate_similary_score(input) == expected
+    end
   end
 end

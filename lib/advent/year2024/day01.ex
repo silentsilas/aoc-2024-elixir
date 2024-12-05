@@ -22,6 +22,8 @@ defmodule Advent.Year2024.Day01 do
   @spec part2(String.t()) :: term()
   def part2(args) do
     args
+    |> to_columns()
+    |> calculate_similary_score()
   end
 
   @spec to_columns(String.t()) :: column_pairs()
@@ -44,5 +46,14 @@ defmodule Advent.Year2024.Day01 do
   def distance_between_columns(data) do
     Enum.map(data, fn {col1, col2} -> abs(col1 - col2) end)
     |> Enum.reduce(fn dist, acc -> dist + acc end)
+  end
+
+  @spec calculate_similary_score(column_pairs()) :: integer()
+  def calculate_similary_score(data) do
+    {first_column, second_column} = Enum.unzip(data)
+
+    # multiply first column number by how many times it exists in the second column
+    Enum.map(first_column, fn num -> num * Enum.count(second_column, &(&1 == num)) end)
+    |> Enum.reduce(fn score, acc -> score + acc end)
   end
 end
