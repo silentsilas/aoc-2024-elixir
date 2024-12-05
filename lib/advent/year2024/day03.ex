@@ -27,7 +27,7 @@ defmodule Advent.Year2024.Day03 do
   @spec find_multiplications(String.t()) :: [instruction()]
   def find_multiplications(input) do
     Regex.scan(~r/mul\((\d+),(\d+)\)/, input, return: :index)
-    |> Enum.map(fn [{pos, len} | nums] ->
+    |> Enum.map(fn [{pos, _len} | nums] ->
       [num1, num2] =
         Enum.map(nums, fn {pos, len} ->
           String.to_integer(String.slice(input, pos, len))

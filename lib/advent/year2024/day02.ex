@@ -9,20 +9,20 @@ defmodule Advent.Year2024.Day02 do
   def part1(args) do
     args
     |> to_rows()
-    |> Enum.count(&is_row_safe?(&1, 0))
+    |> Enum.count(&row_is_safe?(&1, 0))
   end
 
   @spec part2(String.t()) :: non_neg_integer()
   def part2(args) do
     args
     |> to_rows()
-    |> Enum.count(&is_row_safe?(&1, 1))
+    |> Enum.count(&row_is_safe?(&1, 1))
   end
 
-  @spec is_row_safe?(row(), integer()) :: boolean()
-  def is_row_safe?(_row, threshold) when threshold < 0, do: false
+  @spec row_is_safe?(row(), integer()) :: boolean()
+  def row_is_safe?(_row, threshold) when threshold < 0, do: false
 
-  def is_row_safe?(row, threshold) do
+  def row_is_safe?(row, threshold) do
     if row_is_valid?(row) do
       true
     else
@@ -30,7 +30,7 @@ defmodule Advent.Year2024.Day02 do
       |> Enum.any?(fn {_val, idx} ->
         row
         |> List.delete_at(idx)
-        |> is_row_safe?(threshold - 1)
+        |> row_is_safe?(threshold - 1)
       end)
     end
   end

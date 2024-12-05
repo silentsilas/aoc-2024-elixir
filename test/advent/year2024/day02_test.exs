@@ -78,19 +78,19 @@ defmodule Advent.Year2024.Day02Test do
     end
   end
 
-  describe "is_row_safe?/2" do
+  describe "row_is_safe?/2" do
     test "handles different thresholds" do
       # No removals allowed
-      assert is_row_safe?([1, 2, 3, 4, 5], 0)
-      refute is_row_safe?([1, 3, 2, 4, 5], 0)
+      assert row_is_safe?([1, 2, 3, 4, 5], 0)
+      refute row_is_safe?([1, 3, 2, 4, 5], 0)
 
       # One removal allowed
       # Remove 3
-      assert is_row_safe?([1, 3, 2, 4, 5], 1)
+      assert row_is_safe?([1, 3, 2, 4, 5], 1)
       # Remove 5
-      assert is_row_safe?([1, 2, 5, 3, 4], 1)
+      assert row_is_safe?([1, 2, 5, 3, 4], 1)
       # Can't fix with one removal
-      refute is_row_safe?([1, 5, 2, 6, 3], 1)
+      refute row_is_safe?([1, 5, 2, 6, 3], 1)
     end
   end
 
