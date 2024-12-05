@@ -1,7 +1,6 @@
 defmodule Advent.Year2024.Day01 do
   @moduledoc """
   Solution for Advent of Code 2024, Day 1.
-  Handles processing of two-column numerical data with sorting and distance calculations.
   """
 
   @type column_pair :: {integer(), integer()}
@@ -19,6 +18,10 @@ defmodule Advent.Year2024.Day01 do
     |> distance_between_columns()
   end
 
+  @doc """
+  Solves part 2 of the puzzle.
+  Takes raw input string and returns the similarity score between columns.
+  """
   @spec part2(String.t()) :: term()
   def part2(args) do
     args
