@@ -5,25 +5,65 @@ defmodule Advent.Year2024.Day02 do
 
   @type row :: [integer()]
 
-  @doc """
-  Solves part 1 of the puzzle.
-  Takes raw input string and returns how many rows are deemed safe.
-  """
-  @spec part1(String.t()) :: integer()
+  @spec part1(String.t()) :: non_neg_integer()
   def part1(args) do
     args
     |> to_rows()
-    |> Enum.reduce(0, fn row, acc ->
-      if row_increases_or_decreases_safely(row) and row_only_increases_or_decreases(row) do
-        acc + 1
-      else
-        acc
-      end
-    end)
+    |> Enum.count(&is_row_safe?(&1, 0))
   end
 
+  @spec part2(String.t()) :: non_neg_integer()
   def part2(args) do
     args
+    |> to_rows()
+    |> Enum.count(&is_row_safe?(&1, 1))
+  end
+
+  @spec is_row_safe?(row(), integer()) :: boolean()
+  def is_row_safe?(_row, threshold) when threshold < 0, do: false
+
+  def is_row_safe?(row, threshold) do
+    if row_is_valid?(row) do
+      true
+    else
+      Enum.with_index(row)
+      |> Enum.any?(fn {_val, idx} ->
+        row
+        |> List.delete_at(idx)
+        |> is_row_safe?(threshold - 1)
+      end)
+    end
+  end
+
+  @spec row_is_valid?(row()) :: boolean()
+  def row_is_valid?(row) do
+    row_increases_or_decreases_safely?(row) and row_only_increases_or_decreases?(row)
+  end
+
+  @spec row_increases_or_decreases_safely?(row()) :: boolean()
+  def row_increases_or_decreases_safely?(row) do
+    row
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.all?(fn [a, b] -> abs(a - b) <= 3 end)
+  end
+
+  @spec row_only_increases_or_decreases?(row()) :: boolean()
+  def row_only_increases_or_decreases?(row) do
+    strictly_increasing?(row) or strictly_decreasing?(row)
+  end
+
+  @spec strictly_increasing?(row()) :: boolean()
+  def strictly_increasing?(row) do
+    row
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.all?(fn [a, b] -> a < b end)
+  end
+
+  @spec strictly_decreasing?(row()) :: boolean()
+  def strictly_decreasing?(row) do
+    row
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.all?(fn [a, b] -> a > b end)
   end
 
   @spec to_rows(String.t()) :: [row()]
@@ -34,28 +74,5 @@ defmodule Advent.Year2024.Day02 do
       String.split(line, ~r/\s+/, trim: true)
       |> Enum.map(&String.to_integer/1)
     end)
-  end
-
-  # returns true if each element in row increases or decreases by at most 3
-  @spec row_increases_or_decreases_safely(row()) :: boolean()
-  def row_increases_or_decreases_safely(row) do
-    row
-    |> Enum.chunk_every(2, 1, :discard)
-    |> Enum.all?(fn [a, b] -> abs(a - b) <= 3 end)
-  end
-
-  @spec row_only_increases_or_decreases(row()) :: boolean()
-  def row_only_increases_or_decreases(row) do
-    only_increases =
-      row
-      |> Enum.chunk_every(2, 1, :discard)
-      |> Enum.all?(fn [a, b] -> a < b end)
-
-    only_decreases =
-      row
-      |> Enum.chunk_every(2, 1, :discard)
-      |> Enum.all?(fn [a, b] -> a > b end)
-
-    only_increases or only_decreases
   end
 end
