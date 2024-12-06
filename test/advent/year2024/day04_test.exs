@@ -27,13 +27,29 @@ MXMXAXMASX"
 
       assert result == 2468
     end
-  end
 
-  @tag :skip
-  test "part2" do
-    input = nil
-    result = part2(input)
+    test "solves part 2 with example data" do
+      input = ".M.S......
+..A..MSMS.
+.M.S.MAA..
+..A.ASMSM.
+.M.S.M....
+..........
+S.S.S.S.S.
+.A.A.A.A..
+M.M.M.M.M.
+.........."
 
-    assert result
+      result = part2(input)
+
+      assert result == 9
+    end
+
+    test "solves part 2 with fixture data" do
+      input = File.read!("test/fixtures/day04p1_input.txt")
+      result = part2(input)
+
+      assert result == 1864
+    end
   end
 end

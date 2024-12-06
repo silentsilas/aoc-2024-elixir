@@ -1,12 +1,9 @@
 defmodule Advent.Year2024.Day03 do
   @type instruction() :: {integer(), {:do, boolean()} | {:mul, integer()}}
   def part1(args) do
-    ~r/mul\((\d+),(\d+)\)/
-    |> Regex.scan(args)
-    |> Enum.map(fn [_full_match, num1, num2] ->
-      String.to_integer(num1) * String.to_integer(num2)
-    end)
-    |> Enum.sum()
+    args
+    |> find_multiplications()
+    |> process_instructions()
   end
 
   def part2(args) do
