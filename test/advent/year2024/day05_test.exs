@@ -45,12 +45,45 @@ defmodule Advent.Year2024.Day05Test do
       assert result == 5208
     end
 
-    @tag :skip
     test "solves part 2 with example data" do
-      input = nil
+      input = "47|53
+97|13
+97|61
+97|47
+75|29
+61|13
+75|53
+29|13
+97|29
+53|29
+61|53
+97|53
+61|29
+47|13
+75|47
+97|75
+47|61
+75|61
+47|29
+75|13
+53|13
+
+75,47,61,53,29
+97,61,53,29,13
+75,29,13
+75,97,47,61,53
+61,13,29
+97,13,75,29,47"
       result = part2(input)
 
-      assert result
+      assert result == 123
+    end
+
+    test "solves part 2 with fixture data" do
+      input = File.read!("test/fixtures/day05p1_input.txt")
+      result = part2(input)
+
+      assert result == 6732
     end
   end
 
@@ -91,7 +124,10 @@ defmodule Advent.Year2024.Day05Test do
         [4, 5, 6]
       ]
 
-      assert length(valid_orderings(rules, orderings)) == 3
+      %{valid: valid_orderings, invalid: invalid_orderings} = valid_orderings(rules, orderings)
+
+      assert length(valid_orderings) == 3
+      assert length(invalid_orderings) == 1
     end
 
     test "handles multiple rules" do
@@ -109,7 +145,10 @@ defmodule Advent.Year2024.Day05Test do
         [1, 4, 2, 3]
       ]
 
-      assert length(valid_orderings(rules, orderings)) == 1
+      %{valid: valid_orderings, invalid: invalid_orderings} = valid_orderings(rules, orderings)
+
+      assert length(valid_orderings) == 1
+      assert length(invalid_orderings) == 2
     end
   end
 
