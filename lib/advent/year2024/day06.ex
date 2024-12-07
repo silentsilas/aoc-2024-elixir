@@ -7,6 +7,9 @@ defmodule Advent.Year2024.Day06 do
     GuardPatrol.simulate_until_exit(pid)
   end
 
+  # TODO: this is terribly inefficient.
+  # Refactor to trace the guard's path, and only check those positions + adjacent for placing obstacles
+  @spec part2(String.t()) :: non_neg_integer
   def part2(input) do
     {:ok, pid} = GuardPatrol.start_link(input)
     initial_state = GuardPatrol.get_state(pid)
