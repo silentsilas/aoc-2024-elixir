@@ -7,9 +7,44 @@ defmodule Advent.Year2024.Day06 do
     GuardPatrol.simulate_until_exit(pid)
   end
 
-  # not implemented
-  def part2(args) do
-    args
+  def part2(input) do
+    {:ok, pid} = GuardPatrol.start_link(input)
+    initial_state = GuardPatrol.get_state(pid)
+
+    empty_positions = find_empty_positions(initial_state)
+
+    # Process positions in parallel chunks
+    empty_positions
+    |> process_positions_concurrently(input)
+    |> Stream.filter(fn {:ok, result} -> result end)
+    |> Enum.count()
+  end
+
+  defp find_empty_positions(%{width: w, height: h, grid: grid, start_pos: start_pos}) do
+    for x <- 0..(w - 1),
+        y <- 0..(h - 1),
+        pos = {x, y},
+        pos != start_pos,
+        Map.get(grid, pos) == ".",
+        do: pos
+  end
+
+  defp process_positions_concurrently(positions, input) do
+    Task.async_stream(
+      positions,
+      &check_position(&1, input),
+      ordered: false,
+      timeout: :infinity
+    )
+  end
+
+  defp check_position(pos, input) do
+    {:ok, worker_pid} = GuardPatrol.start_link(input)
+
+    case GuardPatrol.simulate_with_obstacle(worker_pid, pos) do
+      {:loop, _} -> true
+      _ -> false
+    end
   end
 end
 
@@ -19,16 +54,18 @@ defmodule Advent.Year2024.Day06.GuardPatrol do
 
   @type position :: {integer, integer}
   @type direction :: :up | :right | :down | :left
-  @type step_result :: {:continue, state} | {:exit, state}
+  @type step_result :: {:continue, state} | {:exit, state} | {:loop, state}
 
   @type state :: %{
           grid: Grid.grid(),
           position: position,
           direction: direction,
           visited: MapSet.t(position),
+          visited_states: MapSet.t({position, direction}),
           width: non_neg_integer,
           height: non_neg_integer,
-          steps: non_neg_integer
+          steps: non_neg_integer,
+          start_pos: position
         }
 
   # Client API
@@ -51,6 +88,11 @@ defmodule Advent.Year2024.Day06.GuardPatrol do
     end
   end
 
+  @spec simulate_with_obstacle(GenServer.server(), position) :: {:loop, state} | {:exit, state}
+  def simulate_with_obstacle(pid, obstacle_pos) do
+    GenServer.call(pid, {:simulate_with_obstacle, obstacle_pos}, :infinity)
+  end
+
   @spec get_state(GenServer.server()) :: state
   def get_state(pid) do
     GenServer.call(pid, :get_state)
@@ -70,9 +112,11 @@ defmodule Advent.Year2024.Day06.GuardPatrol do
       position: start_pos,
       direction: start_dir,
       visited: MapSet.new([start_pos]),
+      visited_states: MapSet.new([{start_pos, start_dir}]),
       width: width,
       height: height,
-      steps: 0
+      steps: 0,
+      start_pos: start_pos
     }
 
     {:ok, state}
@@ -95,6 +139,26 @@ defmodule Advent.Year2024.Day06.GuardPatrol do
   end
 
   @impl true
+  def handle_call({:simulate_with_obstacle, pos}, _from, state) do
+    # Create new grid with temporary obstacle
+    temp_grid = Map.put(state.grid, pos, "#")
+
+    new_state = %{
+      state
+      | grid: temp_grid,
+        position: state.start_pos,
+        direction: :up,
+        visited: MapSet.new([state.start_pos]),
+        visited_states: MapSet.new([{state.start_pos, :up}]),
+        steps: 0
+    }
+
+    result = simulate_until_done(new_state)
+
+    {:reply, result, state}
+  end
+
+  @impl true
   def handle_call(:get_visited_count, _from, state) do
     {:reply, MapSet.size(state.visited), state}
   end
@@ -111,6 +175,14 @@ defmodule Advent.Year2024.Day06.GuardPatrol do
     end)
   end
 
+  @spec simulate_until_done(state) :: {:loop, state} | {:exit, state}
+  defp simulate_until_done(state) do
+    case step(state) do
+      {:continue, new_state} -> simulate_until_done(new_state)
+      other -> other
+    end
+  end
+
   @spec step(state) :: step_result
   defp step(state) do
     next_pos = get_next_position(state.position, state.direction)
@@ -121,18 +193,36 @@ defmodule Advent.Year2024.Day06.GuardPatrol do
         {:exit, new_state}
 
       obstacle_ahead?(next_pos, state) ->
-        # don't update with new position, but run again with new direction
         new_direction = turn_right(state.direction)
-        {:continue, %{new_state | direction: new_direction}}
+        new_state = %{new_state | direction: new_direction}
+
+        # Check for loop
+        state_key = {state.position, new_direction}
+
+        # If we've already visited this position with this direction, we're in a loop
+        if MapSet.member?(state.visited_states, state_key) do
+          {:loop, new_state}
+        else
+          {:continue,
+           %{new_state | visited_states: MapSet.put(new_state.visited_states, state_key)}}
+        end
 
       true ->
         updated_state = %{
           new_state
           | position: next_pos,
-            visited: MapSet.put(new_state.visited, next_pos)
+            visited: MapSet.put(new_state.visited, next_pos),
+            visited_states: MapSet.put(new_state.visited_states, {next_pos, new_state.direction})
         }
 
-        {:continue, updated_state}
+        # Check for loop
+        state_key = {next_pos, updated_state.direction}
+
+        if MapSet.member?(state.visited_states, state_key) do
+          {:loop, updated_state}
+        else
+          {:continue, updated_state}
+        end
     end
   end
 

@@ -27,12 +27,27 @@ defmodule Advent.Year2024.Day06Test do
       assert result == 5030
     end
 
-    @tag :skip
-    test "part2" do
-      input = nil
+    test "solves part 2 with example data" do
+      input = "....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#..."
       result = part2(input)
 
-      assert result
+      assert result == 6
+    end
+
+    test "solves part 2 with fixture data" do
+      input = File.read!("test/fixtures/day06p1_input.txt")
+      result = part2(input)
+
+      assert result == 1928
     end
   end
 end
