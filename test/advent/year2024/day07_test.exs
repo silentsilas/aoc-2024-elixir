@@ -16,16 +16,30 @@ defmodule Advent.Year2024.Day07Test do
   describe "integration tests" do
     test "solves part 1 with example data" do
       input = @part1_example_input
-      result = part1(input)
+      %{sum: result} = part1(input)
 
       assert result == 3749
     end
 
     test "solves part 1 with fixture data" do
       input = File.read!("test/fixtures/day07p1_input.txt")
-      result = part1(input)
+      %{sum: result} = part1(input)
 
       assert result == 2_941_973_819_040
+    end
+
+    test "solves part 2 with example data" do
+      input = @part1_example_input
+      %{sum: result} = part2(input)
+
+      assert result == 11_387
+    end
+
+    test "solves part 2 with fixture data" do
+      input = File.read!("test/fixtures/day07p1_input.txt")
+      %{sum: result} = part2(input)
+
+      assert result == 249_943_041_417_600
     end
   end
 
@@ -46,13 +60,5 @@ defmodule Advent.Year2024.Day07Test do
                %{values: [11, 6, 16, 20], result: 292}
              ] == result
     end
-  end
-
-  @tag :skip
-  test "part2" do
-    input = nil
-    result = part2(input)
-
-    assert result
   end
 end

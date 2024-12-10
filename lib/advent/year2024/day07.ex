@@ -6,18 +6,29 @@ defmodule Advent.Year2024.Day07 do
           values: [non_neg_integer()],
           operators: [operator()]
         }
+  @type answer :: %{sum: non_neg_integer(), equations: [final_equation()]}
 
+  @spec part1(String.t()) :: answer()
   def part1(input) do
-    input
-    |> parse_equations()
-    |> Enum.map(&solve_equation/1)
-    |> Enum.reduce(0, fn equation, acc ->
-      if length(equation.operators) > 0 do
-        acc + equation.result
-      else
-        acc
-      end
-    end)
+    equations =
+      input
+      |> parse_equations()
+      |> Enum.map(&solve_equation(&1, [:add, :multiply]))
+
+    sum =
+      equations
+      |> Enum.reduce(0, fn equation, acc ->
+        if length(equation.operators) > 0 do
+          acc + equation.result
+        else
+          acc
+        end
+      end)
+
+    %{
+      sum: sum,
+      equations: equations
+    }
   end
 
   @spec parse_equations(String.t()) :: [equation()]
@@ -35,34 +46,62 @@ defmodule Advent.Year2024.Day07 do
     end)
   end
 
-  @spec solve_equation(equation()) :: [operator()]
-  def solve_equation(equation) do
+  @spec solve_equation(equation(), [operator()]) :: final_equation()
+  def solve_equation(equation, allowed_operators) do
     %{result: target, values: values} = equation
 
     operators =
       case values do
         [single] when single == target -> []
-        [value | rest] -> find_operators(rest, value, target, [])
+        [value | rest] -> find_operators(rest, value, target, [], allowed_operators)
       end
 
     Map.put(equation, :operators, operators)
   end
 
-  defp find_operators([], current, target, acc), do: if(current == target, do: acc, else: [])
+  defp find_operators([], current, target, acc, _allowed_operators),
+    do: if(current == target, do: acc, else: [])
 
-  defp find_operators([value | rest], current, target, acc) do
-    add_result = find_operators(rest, current + value, target, acc ++ [:add])
-    mult_result = find_operators(rest, current * value, target, acc ++ [:multiply])
+  defp find_operators([value | rest], current, target, acc, allowed_operators) do
+    operations = [
+      {:add, fn -> current + value end},
+      {:multiply, fn -> current * value end},
+      {:concatenate, fn -> String.to_integer("#{current}#{value}") end}
+    ]
 
-    # Return first non-empty result
-    case {add_result, mult_result} do
-      {[], []} -> []
-      {[], result} -> result
-      {result, _} -> result
-    end
+    operations
+    |> Enum.filter(fn {op, _} -> op in allowed_operators end)
+    |> Enum.map(fn {op, calc} ->
+      find_operators(rest, calc.(), target, acc ++ [op], allowed_operators)
+    end)
+    |> Enum.find([], &(&1 != []))
   end
 
-  def part2(args) do
-    args
+  @spec part2(String.t()) :: answer()
+  def part2(input) do
+    %{sum: previous_sum, equations: equations} =
+      input
+      |> part1()
+
+    unsolved_equations = Enum.filter(equations, &(&1.operators == []))
+
+    equations =
+      unsolved_equations
+      |> Enum.map(&solve_equation(&1, [:add, :multiply, :concatenate]))
+
+    sum =
+      equations
+      |> Enum.reduce(0, fn equation, acc ->
+        if equation.operators != [] do
+          acc + equation.result
+        else
+          acc
+        end
+      end)
+
+    %{
+      sum: previous_sum + sum,
+      equations: equations
+    }
   end
 end
