@@ -1,4 +1,6 @@
 defmodule Advent.Year2024.Day11 do
+  @type number_counts :: %{integer() => non_neg_integer()}
+
   def part1(input) do
     input
     |> parse()
@@ -11,6 +13,7 @@ defmodule Advent.Year2024.Day11 do
     |> solve(75)
   end
 
+  @spec parse(String.t()) :: [integer()]
   defp parse(input) do
     input
     |> String.trim()
@@ -18,29 +21,45 @@ defmodule Advent.Year2024.Day11 do
     |> Enum.map(&String.to_integer/1)
   end
 
+  @spec solve([integer()], non_neg_integer()) :: integer()
   defp solve(initial_arrangement, iterations) do
-    Enum.reduce(1..iterations, initial_arrangement, fn _, acc ->
-      run_rules(acc)
-    end)
-    |> length()
+    initial_counts = Enum.frequencies(initial_arrangement)
+
+    1..iterations
+    |> Enum.reduce(initial_counts, fn _, acc -> run_rules_with_frequencies(acc) end)
+    |> Map.values()
+    |> Enum.sum()
   end
 
-  def run_rules(numbers) do
-    numbers
-    |> Enum.map(fn original_number ->
-      after_zero = zero_rule(original_number)
+  @spec run_rules_with_frequencies(number_counts()) :: number_counts()
+  def run_rules_with_frequencies(number_counts) do
+    Enum.reduce(number_counts, %{}, fn {number, count}, result_counts ->
+      number
+      |> process_single_number()
+      |> Enum.reduce(result_counts, fn new_number, updated_counts ->
+        Map.update(updated_counts, new_number, count, &(&1 + count))
+      end)
+    end)
+  end
 
-      case even_rule(after_zero, original_number) do
+  @spec process_single_number(integer()) :: [integer()]
+  def process_single_number(number) do
+    number
+    |> zero_rule()
+    |> then(fn after_zero ->
+      case even_rule(after_zero, number) do
         {:ok, {left, right}} -> [left, right]
-        {:not_applicable, _} -> [multiply_rule(after_zero, original_number)]
+        {:not_applicable, n} -> [multiply_rule(n, number)]
       end
     end)
-    |> List.flatten()
   end
 
+  @spec zero_rule(integer()) :: integer()
   def zero_rule(0), do: 1
   def zero_rule(number), do: number
 
+  @spec even_rule(integer(), integer()) ::
+          {:ok, {integer(), integer()}} | {:not_applicable, integer()}
   def even_rule(number, original) when number >= 10 and number == original do
     digit_count = trunc(:math.log10(number)) + 1
 
@@ -60,6 +79,7 @@ defmodule Advent.Year2024.Day11 do
 
   def even_rule(number, _original), do: {:not_applicable, number}
 
+  @spec multiply_rule(integer(), integer()) :: integer()
   def multiply_rule(number, original) when number == original, do: number * 2024
   def multiply_rule(number, _original), do: number
 end

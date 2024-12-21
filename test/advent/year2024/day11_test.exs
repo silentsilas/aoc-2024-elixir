@@ -20,12 +20,11 @@ defmodule Advent.Year2024.Day11Test do
       assert result == 187_738
     end
 
-    @tag :skip
     test "solves part 2 with fixture data" do
       input = File.read!("test/fixtures/day11p1_input.txt")
       result = part2(input)
 
-      assert result == 0
+      assert result == 223_767_210_249_237
     end
   end
 
@@ -63,9 +62,9 @@ defmodule Advent.Year2024.Day11Test do
     end
   end
 
-  describe "run_rules/1" do
+  describe "run_rules_with_frequencies/1" do
     test "applies zero_rule and even_rule to each number" do
-      assert run_rules([125, 17]) == [253_000, 1, 7]
+      assert run_rules_with_frequencies([{125, 1}, {17, 1}]) == %{1 => 1, 7 => 1, 253_000 => 1}
     end
   end
 end
