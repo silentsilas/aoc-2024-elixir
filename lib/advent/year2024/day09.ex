@@ -1,95 +1,106 @@
 defmodule Advent.Year2024.Day09 do
+  @type block_id :: non_neg_integer()
+  @type file_id :: non_neg_integer()
+  @type disk_block :: {block_id(), file_id() | :free}
+  @type disk_state :: [disk_block()]
+  @type input_digits :: [non_neg_integer()]
+
+  @spec part1(String.t()) :: non_neg_integer()
   def part1(input) do
-    input
-    |> parse_input()
-    |> expand_to_disk_map()
-    |> compact_disk()
-    |> hashsum()
+    digits = parse(input)
+    initial_disk_state = build_initial_disk(digits)
+    disk_state = Enum.reverse(initial_disk_state)
+
+    movable_files =
+      Enum.filter(initial_disk_state, fn {_, content} -> content != :free end)
+
+    final_disk_state = compress_disk(disk_state, movable_files, [])
+
+    calculate_hash(final_disk_state)
   end
 
-  defp parse_input(input) do
+  @spec parse(String.t()) :: input_digits()
+  def parse(input) do
     input
-    |> String.split("\n", trim: true)
-    |> Enum.flat_map(&String.graphemes/1)
+    |> String.trim()
+    |> String.graphemes()
     |> Enum.map(&String.to_integer/1)
   end
 
-  # expands "2333133121414131402" to "00...111...2...333.44.5555.6666.777.888899"
-  defp expand_to_disk_map(numbers) do
-    numbers
-    |> Enum.with_index()
-    |> Enum.reduce_while({0, ""}, &expand_segment/2)
-    |> elem(1)
-    |> String.graphemes()
+  @spec build_initial_disk(input_digits()) :: disk_state()
+  defp build_initial_disk(digits) do
+    build_initial_disk(digits, :file, _block_id = 0, _current_file = 0, _acc = [])
   end
 
-  defp expand_segment({block, index}, {current_id, acc}) do
-    if Integer.mod(index, 2) == 0 do
-      # File block
-      {:cont, {current_id + 1, acc <> String.duplicate(Integer.to_string(current_id), block)}}
-    else
-      # Space block
-      {:cont, {current_id, acc <> String.duplicate(".", block)}}
-    end
+  @spec build_initial_disk(input_digits(), :file | :free, block_id(), file_id(), disk_state()) ::
+          disk_state()
+  defp build_initial_disk([0 | remaining], :file, block_id, current_file, acc) do
+    build_initial_disk(remaining, :free, block_id, current_file + 1, acc)
   end
 
-  defp compact_disk(initial_disk) do
-    initial_disk
-    |> Stream.iterate(&move_next_file/1)
-    |> Stream.take_while(&(&1 != nil))
-    |> Stream.map(&Enum.join/1)
-    |> Enum.to_list()
-    |> List.last()
-  end >
-    defp move_next_file(disk) do
-      with {:ok, dot_index} <- find_leftmost_dot(disk),
-           {:ok, file_index} <- find_rightmost_file(disk, dot_index) do
-        move_file(disk, file_index, dot_index)
-      else
-        _ -> nil
-      end
-    end
-
-  defp find_leftmost_dot(disk) do
-    case Enum.find_index(disk, &(&1 == ".")) do
-      nil -> :error
-      index -> {:ok, index}
-    end
+  @spec build_initial_disk(input_digits(), :file | :free, block_id(), file_id(), disk_state()) ::
+          disk_state()
+  defp build_initial_disk([0 | remaining], :free, block_id, current_file, acc) do
+    build_initial_disk(remaining, :file, block_id, current_file, acc)
   end
 
-  defp find_rightmost_file(disk, after_index) do
-    disk
-    |> Enum.drop(after_index + 1)
-    |> Enum.with_index(after_index + 1)
-    |> Enum.reverse()
-    |> Enum.find(fn {char, _i} -> char != "." end)
-    |> case do
-      nil -> :error
-      {_char, index} -> {:ok, index}
-    end
+  @spec build_initial_disk(input_digits(), :file | :free, block_id(), file_id(), disk_state()) ::
+          disk_state()
+  defp build_initial_disk([count | remaining], :file, block_id, current_file, acc) do
+    build_initial_disk(
+      [count - 1 | remaining],
+      :file,
+      block_id + 1,
+      current_file,
+      [{block_id, current_file} | acc]
+    )
   end
 
-  defp move_file(disk, from_index, to_index) do
-    {before_from, [file | after_from]} = Enum.split(disk, from_index)
-    {before_to, [_dot | after_to]} = Enum.split(before_from, to_index)
-
-    before_to ++ [file] ++ after_to ++ ["."] ++ after_from
+  @spec build_initial_disk(input_digits(), :file | :free, block_id(), file_id(), disk_state()) ::
+          disk_state()
+  defp build_initial_disk([count | remaining], :free, block_id, current_file, acc) do
+    build_initial_disk(
+      [count - 1 | remaining],
+      :free,
+      block_id + 1,
+      current_file,
+      [{block_id, :free} | acc]
+    )
   end
 
-  defp hashsum(disk) do
-    disk
-    |> String.graphemes()
-    |> Enum.with_index()
-    |> Enum.reduce(0, fn {char, index}, acc ->
-      if char == "." do
-        acc
-      else
-        acc + index * String.to_integer(char)
-      end
+  @spec build_initial_disk([], :file | :free, block_id(), file_id(), disk_state()) :: disk_state()
+  defp build_initial_disk([], _state, _block_id, _current_file, acc), do: acc
+
+  @spec compress_disk(disk_state(), disk_state(), disk_state()) :: disk_state()
+  defp compress_disk(
+         [{block_id, :free} | blocks],
+         [{file_block_id, file_id} | movable_files],
+         acc
+       )
+       when block_id <= file_block_id do
+    compress_disk(blocks, movable_files, [{block_id, file_id} | acc])
+  end
+
+  defp compress_disk(
+         [{block_id, file_id} | blocks],
+         [{file_block_id, _} | _] = movable_files,
+         acc
+       )
+       when block_id <= file_block_id do
+    compress_disk(blocks, movable_files, [{block_id, file_id} | acc])
+  end
+
+  defp compress_disk(_blocks, _movable_files, acc), do: acc
+
+  @spec calculate_hash(disk_state()) :: non_neg_integer()
+  defp calculate_hash(disk_state) do
+    Enum.reduce(disk_state, 0, fn
+      {block_id, file_id}, acc when is_integer(file_id) -> acc + block_id * file_id
+      {_block_id, :free}, acc -> acc
     end)
   end
 
-  def part2(_input) do
-    :ok
+  def part2(_) do
+    :not_implemented
   end
 end

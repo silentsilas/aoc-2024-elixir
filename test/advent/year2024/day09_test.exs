@@ -17,7 +17,7 @@ defmodule Advent.Year2024.Day09Test do
       input = File.read!("test/fixtures/day09p1_input.txt")
       result = part1(input)
 
-      assert result == 0
+      assert result == 6_288_599_492_129
     end
   end
 
