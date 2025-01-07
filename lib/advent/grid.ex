@@ -47,4 +47,13 @@ defmodule Advent.Grid do
     {_, max_y} = Enum.max_by(positions, fn {_, y} -> y end)
     {max_x + 1, max_y + 1}
   end
+
+  @spec get_neighbors(position) :: [position]
+  def get_neighbors({row, col}),
+    do: [
+      {row + 1, col},
+      {row - 1, col},
+      {row, col + 1},
+      {row, col - 1}
+    ]
 end
